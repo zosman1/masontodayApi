@@ -7,17 +7,15 @@ import json
 IMAGE_URL = "https://static1.campusgroups.com"
 MASON_360_URL = "https://mason360.gmu.edu"
 
+# LEGACY - not sure if removing yet
+# def scrape360():
+# 	r = requests.get("https://mason360.gmu.edu/ical/ical_gmu.ics")
+# 	result = jicson.fromText(r.text)
+# 	return result
 
-def scrape360():
-	r = requests.get("https://mason360.gmu.edu/ical/ical_gmu.ics")
-	result = jicson.fromText(r.text)
-	return result
 
 
-
-def getEventCards():
-	# endpoint 1
-	# gets event cards for events page
+def getEvents():
 	r = requests.get(
 		"https://mason360.gmu.edu/mobile_ws/v17/mobile_events_list?range=0&limit=20")
 	events = json.loads(r.text)
@@ -40,27 +38,25 @@ def getEventCards():
 
 		if(not newEvent["displayType"] == "separator"):
 			eventList.append(hydrateEvent(cleanupEvent(newEvent)))
-
-
 	return eventList
 
 
 def getDescriptionFromEventPage(eventUrl):
-	r = requests.get(eventUrl)
+    	r = requests.get(eventUrl)
 	soup = BeautifulSoup(r.text, 'html.parser')
 	
 	for cardBlock in soup.find_all('div', class_="card-block"):
-		if "Details" in cardBlock.get_text():
-			description = list((filter(lambda div:  "\r\n\t\t\t\t\t" in div, cardBlock.contents)))[0]
+    		if "Details" in cardBlock.get_text():
+    			description = list((filter(lambda div:  "\r\n\t\t\t\t\t" in div, cardBlock.contents)))[0]
 			return description.strip()
-	#returns description
 
-# modify the event object to be a bit more friendly
+# for now only adds description to event, more to come
 def hydrateEvent(event):
 	event["description"] = getDescriptionFromEventPage(event["eventUrl"])
 	return event
 
 
+# modify the event object to be a bit more friendly
 def cleanupEvent(event):
 	# cleanup image url
 	if('eventPicture' in event.keys()):
@@ -93,10 +89,4 @@ def cleanupEvent(event):
 			event['timeStr'] = p[1].string.replace("&ndash;", "2011\u201312")
 		del event["eventDates"]
 
-
-
 	return event
-
-
-# print(getEventCards())
-# getEventCards()
